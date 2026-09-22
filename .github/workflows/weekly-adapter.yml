@@ -20,6 +20,6 @@ jobs:
         run: pip install -r requirements.txt
       - name: Rebuild adapter from recent feedback
         env:
-          DATABASE_URL: \${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           PYTHONPATH: .
         run: python scripts/weekly_adapter.py
