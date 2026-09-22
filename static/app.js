@@ -10,6 +10,14 @@ const consent = document.querySelector("#consent");
 const composer = document.querySelector("#composer");
 const message = document.querySelector("#message");
 const adapterVersion = document.querySelector("#adapterVersion");
+const deleteConversation = document.querySelector("#deleteConversation");
+
+deleteConversation.addEventListener("click", async () => {
+  await fetch("/api/conversations/" + state.conversationId, {method: "DELETE"});
+  localStorage.removeItem("conversation_id");
+  localStorage.removeItem("consent");
+  location.reload();
+});
 
 consent.checked = state.consent;
 if (state.consent) privacy.hidden = true;
