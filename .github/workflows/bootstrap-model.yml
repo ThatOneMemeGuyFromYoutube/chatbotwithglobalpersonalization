@@ -1,0 +1,56 @@
+name: One-time model bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: "Runner label with persistent disk (for example: self-hosted)"
+        required: true
+        default: "self-hosted"
+        type: string
+      model_dir:
+        description: "Persistent directory for model files"
+        required: true
+        default: "/opt/chatbot-models"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  download:
+    runs-on: \${{ inputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Hugging Face client
+        run: pip install --no-cache-dir huggingface_hub
+      - name: Download Ternary Bonsai PQ2_0
+        env:
+          MODEL_DIR: \${{ inputs.model_dir }}
+          HF_TOKEN: \${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$MODEL_DIR"
+          python - <<'PY'
+          import os
+          from huggingface_hub import hf_hub_download
+
+          path = hf_hub_download(
+              repo_id="prism-ml/Ternary-Bonsai-2-27B-gguf",
+              filename="Ternary-Bonsai-2-27B-PQ2_0.gguf",
+              local_dir=os.environ["MODEL_DIR"],
+              token=os.environ.get("HF_TOKEN") or None,
+          )
+          size = os.path.getsize(path)
+          print(f"downloaded={path}")
+          print(f"bytes={size}")
+          if size < 7_000_000_000:
+              raise SystemExit("The downloaded file is unexpectedly small.")
+          PY
+      - name: Print next step
+        run: |
+          echo "Model is stored on the runner at: \${{ inputs.model_dir }}/Ternary-Bonsai-2-27B-PQ2_0.gguf"
+          echo "Point MODEL_PATH and your PrismML llama.cpp server at this file."
