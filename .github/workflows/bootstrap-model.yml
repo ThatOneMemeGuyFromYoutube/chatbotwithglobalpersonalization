@@ -34,7 +34,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$MODEL_DIR"
-          python - <<\x27PY\x27
+          python - <<'PY'
           import os
           from huggingface_hub import hf_hub_download
 
