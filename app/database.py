@@ -88,12 +88,28 @@ def add_message(db: Session, conversation_id: str, role: str, content: str) -> M
 def add_rating(db: Session, conversation_id: str, message_id: str, rating: int) -> None:
     if rating not in (1, 2, 3, 4, 5):
         raise ValueError("rating must be between 1 and 5")
+    message = db.get(Message, message_id)
+    if message is None or message.conversation_id != conversation_id:
+        raise ValueError("message not found")
     db.add(Rating(
         id=str(uuid.uuid4()),
         conversation_id=conversation_id,
         message_id=message_id,
         rating=rating,
     ))
+    db.commit()
+
+def delete_conversation(db: Session, conversation_id: str) -> None:
+    conversation = db.get(Conversation, conversation_id)
+    if conversation is None:
+        return
+    for row in db.scalars(select(MessageEdit).where(MessageEdit.conversation_id == conversation_id)).all():
+        db.delete(row)
+    for row in db.scalars(select(Rating).where(Rating.conversation_id == conversation_id)).all():
+        db.delete(row)
+    for row in db.scalars(select(Message).where(Message.conversation_id == conversation_id)).all():
+        db.delete(row)
+    db.delete(conversation)
     db.commit()
 
 def edit_message(db: Session, conversation_id: str, message_id: str, new_content: str) -> Message:
