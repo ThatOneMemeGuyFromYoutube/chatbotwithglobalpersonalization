@@ -11,6 +11,7 @@ from .database import (
     SessionLocal,
     add_message,
     add_rating,
+    delete_conversation,
     edit_message,
     ensure_conversation,
     get_messages,
@@ -94,6 +95,12 @@ def edit(req: EditRequest, db: Session = Depends(db_session)):
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"ok": True, "message_id": message.id, "content": message.content}
+
+@app.get("/api/conversations/{conversation_id}")
+@app.delete("/api/conversations/{conversation_id}")
+def delete_conversation_route(conversation_id: str, db: Session = Depends(db_session)):
+    delete_conversation(db, conversation_id)
+    return {"ok": True}
 
 @app.get("/api/conversations/{conversation_id}")
 def conversation(conversation_id: str, db: Session = Depends(db_session)):
