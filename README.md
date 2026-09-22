@@ -1,6 +1,6 @@
 # Global Personality Chatbot
 
-A privacy-first chatbot starter built around **prism-ml/Ternary-Bonsai-2-27B-gguf** with a shared, global personality adapter.
+A privacy-first chatbot starter built around **Qwen2.5-1.5B-Instruct Q4_K_M** with a shared, global personality adapter.
 
 ## What this repo does
 
@@ -15,7 +15,7 @@ A privacy-first chatbot starter built around **prism-ml/Ternary-Bonsai-2-27B-ggu
 
 ### Important model/runtime note
 
-The default model is **Qwen2.5-1.5B-Instruct Q4_K_M**, a roughly 1.12 GB GGUF published by Qwen. A normal GitHub-hosted runner is not a suitable permanent inference machine, and GitHub's regular repository file limit is 100 MiB. The one-time bootstrap workflow downloads that GGUF and publishes it as a GitHub Release asset. GitHub allows individual release assets below 2 GiB, so this model fits without entering Git history.
+The default model is **Qwen2.5-1.5B-Instruct Q4_K_M**, a roughly 1.12 GB GGUF published by Qwen. A normal GitHub-hosted runner is not a suitable permanent inference machine. The one-time bootstrap workflow downloads that GGUF and publishes it as a GitHub Release asset rather than putting the binary in Git history.
 
 The application is intentionally split into:
 
@@ -33,6 +33,8 @@ Feedback/edit events
       -> optional GPU LoRA training
       -> publish adapter artifact
 ```
+
+GitHub Actions handles builds and scheduled jobs; the FastAPI server itself needs persistent compute outside an ordinary short-lived GitHub-hosted Actions job.
 
 ## Local development
 
@@ -53,8 +55,6 @@ uvicorn app.main:app --reload
 ```
 
 5. Open http://localhost:8000.
-
-The bundled model card currently recommends temperature 0.7, top-p 0.95, and top-k 20 for this model family.
 
 ## Database
 
@@ -83,22 +83,31 @@ There are two layers:
 
 GGUF inference weights are treated as deployment artifacts. LoRA training normally needs a compatible transformer-format training checkpoint; the GGUF file itself is not treated as a directly fine-tunable Transformers checkpoint.
 
-## GitHub Actions
+## GitHub Actions and Backend environment
 
-- `bootstrap-model.yml`: manual, one-time model download to a persistent model directory on a self-hosted/larger runner.
-- `weekly-adapter.yml`: every Sunday, exports recent feedback and rebuilds the global personality adapter.
-- `ci.yml`: tests the API and frontend basics.
-- `container.yml`: builds a container image on pushes to `main`.
+The repository uses a GitHub Environment named **Backend** for deployment-time configuration.
 
-Set these repository variables/secrets as needed:
+Put these in **Settings → Environments → Backend**:
 
+**Variables**
+- `BACKEND_URL` — the public HTTPS URL of the FastAPI server, used when building the GitHub Pages frontend.
+
+**Secrets**
 - `DATABASE_URL` — production PostgreSQL connection string.
-- `LLAMA_BASE_URL` — URL for the llama.cpp OpenAI-compatible server.
-- `TRAIN_LORA` — `1` to enable optional GPU LoRA training.
-- `TRAIN_BASE_MODEL` — compatible transformer checkpoint for the optional LoRA stage.
+- `LLAMA_BASE_URL` — URL for the llama.cpp OpenAI-compatible server when it contains sensitive connection details.
 - `HF_TOKEN` — only when the optional training checkpoint is gated/private.
 
-The default Qwen2.5-1.5B-Instruct model is Apache-2.0 licensed. citeturn197563search0turn214960search0
+The weekly adapter workflow references the **Backend** environment, so `DATABASE_URL` is read from that environment's secrets.
+
+The Pages build also references the **Backend** environment so `BACKEND_URL` can be stored there. The Pages deployment itself continues to use the separate `github-pages` environment.
+
+The remaining tuning options can be supplied as workflow/repository variables as appropriate:
+- `TRAIN_LORA` — `1` to enable optional GPU LoRA training.
+- `TRAIN_BASE_MODEL` — compatible transformer checkpoint for the optional LoRA stage.
+
+### Important limitation
+
+A GitHub Environment is a configuration/deployment boundary, not a server. It provides variables, secrets, and optional protection rules to jobs that reference it; it does not keep a FastAPI process running 24/7. The container workflow currently publishes the backend image to GHCR, and that image still needs to be deployed to persistent compute.
 
 ## License
 
