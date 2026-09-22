@@ -96,7 +96,6 @@ def edit(req: EditRequest, db: Session = Depends(db_session)):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"ok": True, "message_id": message.id, "content": message.content}
 
-@app.get("/api/conversations/{conversation_id}")
 @app.delete("/api/conversations/{conversation_id}")
 def delete_conversation_route(conversation_id: str, db: Session = Depends(db_session)):
     delete_conversation(db, conversation_id)
