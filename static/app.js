@@ -1,3 +1,4 @@
+const API_BASE = (window.CHATBOT_API_BASE || "").replace(/\/$/, "");
 const state = {
   conversationId: localStorage.getItem("conversation_id") || crypto.randomUUID(),
   consent: localStorage.getItem("consent") === "yes"
@@ -12,8 +13,13 @@ const message = document.querySelector("#message");
 const adapterVersion = document.querySelector("#adapterVersion");
 const deleteConversation = document.querySelector("#deleteConversation");
 
+function api(path) {
+  if (!API_BASE) return path;
+  return API_BASE + path;
+}
+
 deleteConversation.addEventListener("click", async () => {
-  await fetch("/api/conversations/" + state.conversationId, {method: "DELETE"});
+  await fetch(api("/api/conversations/" + state.conversationId), {method: "DELETE"});
   localStorage.removeItem("conversation_id");
   localStorage.removeItem("consent");
   location.reload();
@@ -21,6 +27,13 @@ deleteConversation.addEventListener("click", async () => {
 
 consent.checked = state.consent;
 if (state.consent) privacy.hidden = true;
+
+if (!API_BASE && window.location.hostname.endsWith("github.io")) {
+  const notice = document.createElement("p");
+  notice.className = "sub";
+  notice.textContent = "GitHub Pages is hosting the UI. Set the repository variable BACKEND_URL to the public FastAPI server URL to enable chat.";
+  document.querySelector(".shell header").appendChild(notice);
+}
 
 function addMessage(id, role, text) {
   const wrapper = document.createElement("article");
@@ -45,7 +58,7 @@ function addMessage(id, role, text) {
       b.className = "small";
       b.textContent = "★ " + label;
       b.onclick = async () => {
-        await fetch("/api/rating", {
+        await fetch(api("/api/rating"), {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({conversation_id: state.conversationId, message_id: id, rating: value})
@@ -71,7 +84,7 @@ function makeEditable(wrapper, id, oldText) {
   const save = document.createElement("button");
   save.textContent = "Save edit";
   save.onclick = async () => {
-    const response = await fetch("/api/edit", {
+    const response = await fetch(api("/api/edit"), {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({conversation_id: state.conversationId, message_id: id, new_content: textarea.value})
@@ -98,12 +111,16 @@ composer.addEventListener("submit", async (event) => {
     alert("Please accept the data-use warning first.");
     return;
   }
+  if (!API_BASE) {
+    alert("The GitHub Pages frontend has no BACKEND_URL configured yet.");
+    return;
+  }
   const text = message.value.trim();
   if (!text) return;
   message.value = "";
   addMessage(crypto.randomUUID(), "user", text);
 
-  const response = await fetch("/api/chat", {
+  const response = await fetch(api("/api/chat"), {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({conversation_id: state.conversationId, message: text, consent: true})
@@ -119,7 +136,8 @@ composer.addEventListener("submit", async (event) => {
 
 (async () => {
   try {
-    const response = await fetch("/api/conversations/" + state.conversationId);
+    const response = await fetch(api("/api/conversations/" + state.conversationId));
+    if (!response.ok) return;
     const data = await response.json();
     for (const item of (data.messages || [])) addMessage(item.id, item.role, item.content);
   } catch (_) {}
