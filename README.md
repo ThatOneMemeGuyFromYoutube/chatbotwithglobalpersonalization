@@ -98,7 +98,7 @@ Set these repository variables/secrets as needed:
 - `TRAIN_BASE_MODEL` — compatible transformer checkpoint for the optional LoRA stage.
 - `HF_TOKEN` — only when the optional training checkpoint is gated/private.
 
-The default Qwen2.5-1.5B-Instruct model is Apache-2.0 licensed. urlQwen model cardhttps://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
+The default Qwen2.5-1.5B-Instruct model is Apache-2.0 licensed. citeturn197563search0turn214960search0
 
 ## License
 
