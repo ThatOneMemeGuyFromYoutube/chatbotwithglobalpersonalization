@@ -2,35 +2,26 @@ name: One-time model bootstrap
 
 on:
   workflow_dispatch:
-    inputs:
-      runner:
-        description: "Runner label with persistent disk (for example: self-hosted)"
-        required: true
-        default: "self-hosted"
-        type: string
-      model_dir:
-        description: "Persistent directory for model files"
-        required: true
-        default: "/opt/chatbot-models"
-        type: string
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  download:
-    runs-on: ${{ inputs.runner }}
+  download-and-publish:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+
       - name: Install Hugging Face client
         run: pip install --no-cache-dir huggingface_hub
-      - name: Download Ternary Bonsai PQ2_0
+
+      - name: Download Qwen2.5 1.5B Instruct Q4_K_M
         env:
-          MODEL_DIR: ${{ inputs.model_dir }}
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          MODEL_DIR: ${{ runner.temp }}/model
         run: |
           set -euo pipefail
           mkdir -p "$MODEL_DIR"
@@ -39,18 +30,37 @@ jobs:
           from huggingface_hub import hf_hub_download
 
           path = hf_hub_download(
-              repo_id="prism-ml/Ternary-Bonsai-2-27B-gguf",
-              filename="Ternary-Bonsai-2-27B-PQ2_0.gguf",
+              repo_id="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+              filename="qwen2.5-1.5b-instruct-q4_k_m.gguf",
               local_dir=os.environ["MODEL_DIR"],
-              token=os.environ.get("HF_TOKEN") or None,
           )
-          size = os.path.getsize(path)
-          print(f"downloaded={path}")
-          print(f"bytes={size}")
-          if size < 7_000_000_000:
-              raise SystemExit("The downloaded file is unexpectedly small.")
+          print(path)
           PY
-      - name: Print next step
+
+      - name: Verify model checksum
+        env:
+          MODEL_DIR: ${{ runner.temp }}/model
         run: |
-          echo "Model is stored on the runner at: ${{ inputs.model_dir }}/Ternary-Bonsai-2-27B-PQ2_0.gguf"
-          echo "Point MODEL_PATH and your PrismML llama.cpp server at this file."
+          set -euo pipefail
+          cd "$MODEL_DIR"
+          echo "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e  qwen2.5-1.5b-instruct-q4_k_m.gguf" | sha256sum -c -
+
+      - name: Publish model as repository release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODEL_DIR: ${{ runner.temp }}/model
+          TAG: model-qwen2.5-1.5b-q4-k-m
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$MODEL_DIR/qwen2.5-1.5b-instruct-q4_k_m.gguf" --repo "$REPO" --clobber
+          else
+            gh release create "$TAG"               "$MODEL_DIR/qwen2.5-1.5b-instruct-q4_k_m.gguf"               --repo "$REPO"               --target "${{ github.sha }}"               --title "Qwen2.5 1.5B Instruct Q4_K_M"               --notes "Inference model asset: Qwen/Qwen2.5-1.5B-Instruct-GGUF, q4_k_m. See model license and card on Hugging Face."
+          fi
+
+      - name: Print model download URL
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          echo "Model release: https://github.com/$REPO/releases/tag/model-qwen2.5-1.5b-q4-k-m"
