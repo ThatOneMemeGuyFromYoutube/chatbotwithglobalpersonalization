@@ -1,0 +1,20 @@
+:root { font-family: system-ui, sans-serif; color-scheme: dark; }
+body { margin: 0; background: #0f1115; color: #f4f6f8; }
+.shell { width: min(920px, calc(100% - 32px)); margin: 32px auto; }
+header { display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+h1 { margin-bottom: 6px; }
+.sub { margin-top: 0; color: #aeb6c0; }
+.badge { padding: 6px 10px; border: 1px solid #3a414c; border-radius: 999px; font-size: 12px; }
+.warning { padding: 16px; border: 1px solid #8b6b1f; background: #211a09; border-radius: 12px; margin: 20px 0; }
+.warning p { line-height: 1.5; }
+.chat { display: flex; flex-direction: column; gap: 14px; min-height: 360px; }
+.msg { padding: 14px; border-radius: 14px; white-space: pre-wrap; }
+.msg.user { background: #1d2a3b; align-self: flex-end; max-width: 80%; }
+.msg.assistant { background: #1b2028; align-self: flex-start; max-width: 88%; }
+.meta { margin-top: 8px; font-size: 12px; color: #98a1ad; display: flex; gap: 8px; }
+button { border: 0; border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+.composer { display: flex; gap: 10px; margin-top: 18px; }
+textarea { flex: 1; resize: vertical; border-radius: 10px; padding: 12px; background: #151920; color: inherit; border: 1px solid #3a414c; }
+textarea:focus { outline: 2px solid #7188ff; }
+.small { font-size: 12px; }
+.actions { margin-top: 8px; display: flex; gap: 6px; }
