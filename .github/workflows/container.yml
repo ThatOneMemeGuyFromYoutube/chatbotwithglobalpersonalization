@@ -11,7 +11,6 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   build:
@@ -20,16 +19,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Log in to GHCR with explicit package token
-        if: ${{ secrets.GHCR_TOKEN != '' }}
-        uses: docker/login-action@v4
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Normalize image name
+        id: image
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
-      - name: Log in to GHCR with GITHUB_TOKEN
-        if: ${{ secrets.GHCR_TOKEN == '' }}
+      - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
@@ -40,7 +37,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
 
       - name: Build and push image
         uses: docker/build-push-action@v7
