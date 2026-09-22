@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   download:
-    runs-on: \${{ inputs.runner }}
+    runs-on: ${{ inputs.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -29,12 +29,12 @@ jobs:
         run: pip install --no-cache-dir huggingface_hub
       - name: Download Ternary Bonsai PQ2_0
         env:
-          MODEL_DIR: \${{ inputs.model_dir }}
-          HF_TOKEN: \${{ secrets.HF_TOKEN }}
+          MODEL_DIR: ${{ inputs.model_dir }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
           mkdir -p "$MODEL_DIR"
-          python - <<'PY'
+          python - <<\x27PY\x27
           import os
           from huggingface_hub import hf_hub_download
 
@@ -52,5 +52,5 @@ jobs:
           PY
       - name: Print next step
         run: |
-          echo "Model is stored on the runner at: \${{ inputs.model_dir }}/Ternary-Bonsai-2-27B-PQ2_0.gguf"
+          echo "Model is stored on the runner at: ${{ inputs.model_dir }}/Ternary-Bonsai-2-27B-PQ2_0.gguf"
           echo "Point MODEL_PATH and your PrismML llama.cpp server at this file."
