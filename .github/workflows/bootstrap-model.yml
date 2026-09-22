@@ -1,6 +1,9 @@
 name: One-time model bootstrap
 
 on:
+  push:
+    paths:
+      - .model-bootstrap
   workflow_dispatch:
 
 permissions:
@@ -56,11 +59,10 @@ jobs:
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             gh release upload "$TAG" "$MODEL_DIR/qwen2.5-1.5b-instruct-q4_k_m.gguf" --repo "$REPO" --clobber
           else
-            gh release create "$TAG"               "$MODEL_DIR/qwen2.5-1.5b-instruct-q4_k_m.gguf"               --repo "$REPO"               --target "${{ github.sha }}"               --title "Qwen2.5 1.5B Instruct Q4_K_M"               --notes "Inference model asset: Qwen/Qwen2.5-1.5B-Instruct-GGUF, q4_k_m. See model license and card on Hugging Face."
+            gh release create "$TAG"               "$MODEL_DIR/qwen2.5-1.5b-instruct-q4_k_m.gguf"               --repo "$REPO"               --target "${{ github.sha }}"               --title "Qwen2.5 1.5B Instruct Q4_K_M"               --notes "Inference model asset from Qwen/Qwen2.5-1.5B-Instruct-GGUF. Apache-2.0. SHA256: 6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e"
           fi
 
-      - name: Print model download URL
+      - name: Report release URL
         env:
           REPO: ${{ github.repository }}
-        run: |
-          echo "Model release: https://github.com/$REPO/releases/tag/model-qwen2.5-1.5b-q4-k-m"
+        run: echo "https://github.com/$REPO/releases/tag/model-qwen2.5-1.5b-q4-k-m"
