@@ -15,7 +15,7 @@ A privacy-first chatbot starter built around **prism-ml/Ternary-Bonsai-2-27B-ggu
 
 ### Important model/runtime note
 
-The linked PQ2_0 model is about **7.21 GB** and uses PrismML's llama.cpp fork/custom ternary kernels. A normal GitHub-hosted runner is not a suitable permanent inference machine, and GitHub's regular repository file limit is 100 MiB. The provided bootstrap workflow therefore expects a **persistent self-hosted or larger runner** for model storage/inference rather than trying to commit the model to normal Git history.
+The default model is **Qwen2.5-1.5B-Instruct Q4_K_M**, a roughly 1.12 GB GGUF published by Qwen. A normal GitHub-hosted runner is not a suitable permanent inference machine, and GitHub's regular repository file limit is 100 MiB. The one-time bootstrap workflow downloads that GGUF and publishes it as a GitHub Release asset. GitHub allows individual release assets below 2 GiB, so this model fits without entering Git history.
 
 The application is intentionally split into:
 
@@ -92,13 +92,13 @@ GGUF inference weights are treated as deployment artifacts. LoRA training normal
 
 Set these repository variables/secrets as needed:
 
-- `MODEL_RUNNER` — runner label with enough persistent disk/GPU for your model.
-- `MODEL_DIR` — persistent model directory.
 - `DATABASE_URL` — production PostgreSQL connection string.
 - `LLAMA_BASE_URL` — URL for the llama.cpp OpenAI-compatible server.
 - `TRAIN_LORA` — `1` to enable optional GPU LoRA training.
 - `TRAIN_BASE_MODEL` — compatible transformer checkpoint for the optional LoRA stage.
-- `HF_TOKEN` — only when the training checkpoint is gated/private.
+- `HF_TOKEN` — only when the optional training checkpoint is gated/private.
+
+The default Qwen2.5-1.5B-Instruct model is Apache-2.0 licensed. urlQwen model cardhttps://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF
 
 ## License
 
